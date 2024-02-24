@@ -11,8 +11,7 @@ CREATE TABLE transaction (
 CREATE TABLE customer (
   id INTEGER NOT NULL,
   balance BIGINT NOT NULL,
-  credit INTEGER NOT NULL,
-  history JSONB NOT NULL DEFAULT jsonb_build_object()
+  credit INTEGER NOT NULL
 );
 
 CREATE INDEX idx_customer_id ON customer (id);
