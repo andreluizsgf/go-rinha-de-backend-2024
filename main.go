@@ -2,7 +2,9 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
+	"os"
 
 	"example/rinha-de-backend-2024/internal/clientes"
 
@@ -14,7 +16,9 @@ import (
 
 func main() {
 	// setup
-	db, err := sql.Open("postgres", "user=gorinha dbname=gorinha password=gorinha sslmode=disable")
+	dsn := fmt.Sprintf("host=%s user=%s dbname=%s password=%s sslmode=disable", os.Getenv("PG_HOST"), os.Getenv("PG_USER"), os.Getenv("PG_DB"), os.Getenv("PG_PASSWORD"))
+
+	db, err := sql.Open("postgres", dsn)
 
 	if err != nil {
 		panic(err)

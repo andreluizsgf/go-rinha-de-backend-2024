@@ -3,7 +3,6 @@ package clientes
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -70,8 +69,6 @@ func (h *handler) CreateTransaction(w http.ResponseWriter, r *http.Request) {
 
 func (h *handler) GetBalance(w http.ResponseWriter, r *http.Request) {
 	customerId, _ := strconv.Atoi(chi.URLParam(r, "customerId"))
-
-	fmt.Println(checkCustomerExists(customerId))
 
 	if !checkCustomerExists(customerId) {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
