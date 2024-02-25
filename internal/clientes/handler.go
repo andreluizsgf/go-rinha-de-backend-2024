@@ -3,6 +3,7 @@ package clientes
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -26,42 +27,29 @@ func NewHandler(db *sql.DB) Handler {
 func (h *handler) CreateTransaction(w http.ResponseWriter, r *http.Request) {
 	customerId, _ := strconv.Atoi(chi.URLParam(r, "customerId"))
 
+	if !checkCustomerExists(customerId) {
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	}
+
 	// decode request body to transaction struct
 	var transaction CreateTransactionRequest
 	json.NewDecoder(r.Body).Decode(&transaction)
 
-	// check if its debit
-	if transaction.Type == "d" {
-		transaction.Amount = -transaction.Amount
-	}
-
-	// get customer balance from database
-	var dbCustomer DBCustomer
-
-	err := h.db.QueryRow("SELECT id, balance, credit FROM customer WHERE id = $1", customerId).Scan(&dbCustomer.Id, &dbCustomer.Balance, &dbCustomer.Credit)
-
-	// check if customer exists
-	if err != nil && err != sql.ErrNoRows {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-
-	if err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-
-	// check if customer has enough balance to make transaction
-	if dbCustomer.Balance+transaction.Amount+dbCustomer.Credit < 0 {
-		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
-		return
-	}
-
 	// insert transaction into database
-	_, err = h.db.Exec("INSERT INTO transaction (customer_id, amount, type, description) VALUES (1, $1, $2, $3)", transaction.Amount, transaction.Type, transaction.Description)
+	_, err := h.db.Exec("INSERT INTO transaction (customer_id, amount, type, description) VALUES ($1, $2, $3, $4)", customerId, transaction.Amount, transaction.Type, transaction.Description)
 
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		var errMsg = err.Error()
+
+		if errMsg == "pq: no limit" {
+			http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
+		} else if errMsg == "pq: customer not found" {
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		} else {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
+
 		return
 	}
 
@@ -81,18 +69,19 @@ func (h *handler) CreateTransaction(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) GetBalance(w http.ResponseWriter, r *http.Request) {
-	customerId := chi.URLParam(r, "customerId")
+	customerId, _ := strconv.Atoi(chi.URLParam(r, "customerId"))
+
+	fmt.Println(checkCustomerExists(customerId))
+
+	if !checkCustomerExists(customerId) {
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	}
 
 	// get customer balance from database
 	var dbCustomer DBCustomer
 
 	err := h.db.QueryRow("SELECT id, balance, credit FROM customer WHERE id = $1", customerId).Scan(&dbCustomer.Id, &dbCustomer.Balance, &dbCustomer.Credit)
-
-	// check if customer exists
-	if err != nil && err == sql.ErrNoRows {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
 
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -125,4 +114,8 @@ func (h *handler) GetBalance(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
+}
+
+func checkCustomerExists(id int) bool {
+	return id >= 1 && id <= 5
 }
