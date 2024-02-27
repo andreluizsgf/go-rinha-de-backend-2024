@@ -9,7 +9,6 @@ import (
 	"example/rinha-de-backend-2024/internal/clientes"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 
 	_ "github.com/lib/pq"
 )
@@ -27,8 +26,6 @@ func main() {
 	// routing
 	r := chi.NewRouter()
 	h := clientes.NewHandler(db)
-
-	r.Use(middleware.Logger)
 
 	clientes.AddRoutes(r, h)
 

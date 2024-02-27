@@ -1,5 +1,5 @@
 -- Create transactions table
-CREATE TABLE transaction (
+CREATE UNLOGGED TABLE transaction (
   customer_id INTEGER NOT NULL,
   amount INTEGER NOT NULL,
   type CHAR(1) NOT NULL,
@@ -8,7 +8,7 @@ CREATE TABLE transaction (
 );
 
 -- Create customer table
-CREATE TABLE customer (
+CREATE UNLOGGED TABLE customer (
   id INTEGER NOT NULL,
   balance BIGINT NOT NULL,
   credit INTEGER NOT NULL

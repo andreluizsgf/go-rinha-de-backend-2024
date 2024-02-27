@@ -3,8 +3,7 @@ version: "3.5"
 services:
   api01: &api
     hostname: api01
-    build:
-      dockerfile: Dockerfile
+    image: andreluizsgf/rinha-de-backend-2024-q1
     environment:
       - PG_HOST=db
       - PG_USER=gorinha
@@ -13,15 +12,16 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     deploy:
       resources:
         limits:
-          cpus: "0.6"
-          memory: "200MB"
+          cpus: "0.4"
+          memory: "120MB"
 
   api02:
-    <<: *api 
+    <<: *api
     hostname: api02
     environment:
       - PG_HOST=db
@@ -39,7 +39,7 @@ services:
       - api01
       - api02
     ports:
-        # Obrigatório expor/usar a porta 9999 no load balancer!
+        # Obrigatório expor/usar a porta 9999 no load balancer! 
       - "9999:9999" 
     deploy:
       resources:
@@ -61,19 +61,14 @@ services:
     deploy:
       resources:
         limits:
-          # Note que a soma de todos os limites dos serviços
-          # aqui declarados é de 1.5 unidades de CPU e 550MB
-          # de memória. A distribuição feita aqui é apenas
-          # um exemplo – distribua como quiser.
-          cpus: "0.13"
-          memory: "140MB"
+          cpus: "0.53"
+          memory: "200MB"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gorinha -d gorinha"]
+      interval: 2s
+      timeout: 2s
+      retries: 25
 
-# O uso do modo `bridge` deve ser adequado à carga que será usada no teste.
-# A edição anterior se beneficiou do modo host pois o volume de requisições
-# era relativamente alto e a virtualização da rede se tornou um gargalo, mas
-# este modo é mais complexo de ser configurado. Fique à vontade para usar o
-# modo que quiser desde que não conflite com portas trivialmente usadas em um
-# SO.
 networks:
   default:
     driver: bridge
