@@ -41,7 +41,7 @@ func (h *handler) CreateTransaction(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var errMsg = err.Error()
 
-		if errMsg == "pq: no limit" {
+		if errMsg == "pq: no credit" {
 			http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
 		} else if errMsg == "pq: customer not found" {
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)

@@ -59,7 +59,7 @@ BEGIN
   END IF;
 
   IF cbalance+NEW.amount+ccredit < 0 THEN
-    RAISE EXCEPTION 'no limit';
+    RAISE EXCEPTION 'no credit';
   END IF;
 
   UPDATE customer SET balance = balance + NEW.amount WHERE id = NEW.customer_id;
